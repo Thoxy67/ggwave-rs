@@ -29,7 +29,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ggwave-rs = { git = "https://github.com/yourusername/ggwave-rs.git" }
+ggwave-rs = { git = "https://github.com/Thoxy67/ggwave-rs.git" }
 ```
 
 ## Usage
@@ -148,7 +148,7 @@ let decoded = gg.decode(&raw_data, 1024)?;
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ggwave-rs.git
+git clone https://github.com/Thoxy67/ggwave-rs.git
 cd ggwave-rs
 
 # Build the project
@@ -157,6 +157,7 @@ cargo build
 # Run the examples
 cargo run --example simple_example
 cargo run --example advanced_example
+cargo run --example unsafe_example
 ```
 
 ## How it Works
