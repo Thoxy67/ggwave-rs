@@ -1,0 +1,18 @@
+[package]
+name = "ggwave-rs"
+version = "0.1.0"
+edition = "2024"
+authors = ["Thoxy"]
+readme = "README.md"
+repository = "https://git.thoxy.xyz/thoxy/ggwave-rs"
+license = "MIT"
+
+
+[dependencies]
+hound = "3.5"
+libc = "0.2"
+
+[build-dependencies]
+bindgen = "0.71"
+cc = "1.2"
+cmake = "0.1"
