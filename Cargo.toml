@@ -1,10 +1,10 @@
 [package]
 name = "ggwave-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Thoxy"]
 readme = "README.md"
-repository = "https://git.thoxy.xyz/thoxy/ggwave-rs"
+repository = "https://github.com/Thoxy67/ggwave-rs"
 license = "MIT"
 
 
@@ -16,3 +16,7 @@ libc = "0.2"
 bindgen = "0.71"
 cc = "1.2"
 cmake = "0.1"
+
+[dev-dependencies]
+tempfile = "3.18.0"
+lazy_static = "1.5.0"

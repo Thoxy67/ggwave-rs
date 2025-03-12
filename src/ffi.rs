@@ -1,3 +1,31 @@
+//! Raw FFI bindings to the ggwave C API
+//!
+//! This module exposes the raw C API functions and types for ggwave.
+//! Most users should prefer the safe wrapper functions provided by the `GGWave` struct.
+//! 
+//! # Safety
+//!
+//! All functions in this module are unsafe and require proper understanding of the
+//! underlying C API and memory management. Use with caution.
+
+pub mod constants {
+    /// Maximum data size for decoding buffer
+    pub const MAX_DATA_SIZE: usize = 256;
+    
+    /// Maximum length for variable-length encoding
+    pub const MAX_LENGTH_VARIABLE: usize = 140;
+    
+    /// Maximum length for fixed-length encoding
+    pub const MAX_LENGTH_FIXED: usize = 64;
+    
+    /// Default number of marker frames
+    pub const DEFAULT_MARKER_FRAMES: usize = 16;
+    
+    /// Default encoded data offset
+    pub const DEFAULT_ENCODED_DATA_OFFSET: usize = 3;
+}
+
+// Re-export all bindgen-generated items
 pub use super::{
     // Types
     ggwave_Instance, ggwave_Parameters, ggwave_SampleFormat, ggwave_ProtocolId, ggwave_Filter,
