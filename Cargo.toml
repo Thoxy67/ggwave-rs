@@ -7,7 +7,6 @@ readme = "README.md"
 repository = "https://github.com/Thoxy67/ggwave-rs"
 license = "MIT"
 
-
 [dependencies]
 hound = "3.5"
 libc = "0.2"

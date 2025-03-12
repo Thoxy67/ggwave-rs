@@ -1,4 +1,5 @@
 /target
+/vendors
 
 *.bin
 *.wav

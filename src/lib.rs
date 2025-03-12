@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 
 //! # ggwave-rs
-//! 
+//!
 //! A Rust wrapper for the [ggwave](https://github.com/ggerganov/ggwave) library,
 //! which enables data transmission via audio.
 //!
@@ -56,15 +56,15 @@ use hound::{WavSpec, WavWriter};
 // Public types
 //
 
-pub use ggwave_SampleFormat as SampleFormat;
-pub use ggwave_ProtocolId as ProtocolId;
 pub use ggwave_Filter as Filter;
 pub use ggwave_Parameters as Parameters;
+pub use ggwave_ProtocolId as ProtocolId;
+pub use ggwave_SampleFormat as SampleFormat;
 
 /// Raw FFI bindings to the ggwave C API
-/// 
+///
 /// # Safety
-/// 
+///
 /// These functions are unsafe and require proper understanding of the underlying C API.
 /// Use the safe wrapper functions provided by the `GGWave` struct when possible.
 pub mod ffi;
@@ -132,31 +132,31 @@ pub struct GGWave {
 
 impl GGWave {
     /// Get the raw ggwave instance handle for advanced use cases
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// This function returns the raw instance handle which can be used with the unsafe functions
     /// in the `ffi` module. Using this handle improperly can lead to undefined behavior.
     pub fn raw_instance(&self) -> ffi::ggwave_Instance {
         self.instance
     }
-    
+
     /// Execute a custom operation with the raw ggwave instance
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// The provided function `f` must use the instance safely according to the ggwave C API.
     pub unsafe fn with_raw_instance<F, T>(&self, f: F) -> T
     where
-        F: FnOnce(ffi::ggwave_Instance) -> T
+        F: FnOnce(ffi::ggwave_Instance) -> T,
     {
         f(self.instance)
     }
 
     /// Create a GGWave instance from an existing raw instance
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// The provided instance must be a valid ggwave instance created with `ggwave_init`.
     /// The instance will be owned by the returned GGWave and will be freed when dropped.
     pub unsafe fn from_raw_instance(instance: ffi::ggwave_Instance) -> Self {
@@ -179,26 +179,29 @@ impl GGWave {
             Self { instance }
         }
     }
-    
+
     /// Create a new GGWave instance with fixed-length encoding
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `payload_length` - Fixed payload length to use (must be <= 64)
     /// * `operating_mode` - Operating mode to use (default: RX_AND_TX)
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use ggwave_rs::{GGWave, operating_modes};
-    /// 
+    ///
     /// // Create instance with 64-byte fixed payload length
     /// let ggwave = GGWave::new_with_fixed_payload(64, operating_modes::RX_AND_TX);
     /// ```
     pub fn new_with_fixed_payload(payload_length: i32, operating_mode: i32) -> Self {
-        assert!(payload_length <= constants::MAX_LENGTH_FIXED as i32, 
-                "Fixed payload length must be <= {}", constants::MAX_LENGTH_FIXED);
-        
+        assert!(
+            payload_length <= constants::MAX_LENGTH_FIXED as i32,
+            "Fixed payload length must be <= {}",
+            constants::MAX_LENGTH_FIXED
+        );
+
         unsafe {
             let mut params = ggwave_getDefaultParameters();
             params.payloadLength = payload_length;
@@ -225,7 +228,7 @@ impl GGWave {
             Self { instance }
         }
     }
-    
+
     /// Get default parameters for ggwave
     ///
     /// # Returns
@@ -243,7 +246,7 @@ impl GGWave {
     pub fn default_parameters() -> Parameters {
         unsafe { ggwave_getDefaultParameters() }
     }
-    
+
     /// Encode text to raw audio data
     ///
     /// # Arguments
@@ -269,7 +272,7 @@ impl GGWave {
         unsafe {
             let payload_buffer = text.as_ptr() as *const c_void;
             let payload_size = text.len() as i32;
-            
+
             // First call to determine the required buffer size
             let waveform_size = ggwave_encode(
                 self.instance,
@@ -280,14 +283,14 @@ impl GGWave {
                 ptr::null_mut(),
                 1, // query size in bytes
             );
-            
+
             if waveform_size <= 0 {
                 return Err(Error::EncodeFailed);
             }
-            
+
             // Allocate buffer for the encoded waveform
             let mut waveform_buffer = vec![0u8; waveform_size as usize];
-            
+
             // Second call to actually encode
             let result = ggwave_encode(
                 self.instance,
@@ -298,7 +301,7 @@ impl GGWave {
                 waveform_buffer.as_mut_ptr() as *mut c_void,
                 0, // perform actual encoding
             );
-            
+
             if result <= 0 {
                 Err(Error::EncodeFailed)
             } else {
@@ -306,7 +309,7 @@ impl GGWave {
             }
         }
     }
-    
+
     /// Decode raw audio data to text using the ndecode API
     ///
     /// # Arguments
@@ -335,10 +338,10 @@ impl GGWave {
     pub fn decode(&self, waveform: &[u8], max_payload_size: usize) -> Result<String> {
         unsafe {
             let mut payload_buffer = vec![0u8; max_payload_size];
-            
+
             let waveform_buffer = waveform.as_ptr() as *const c_void;
             let waveform_size = waveform.len() as i32;
-            
+
             let result = ggwave_ndecode(
                 self.instance,
                 waveform_buffer,
@@ -346,7 +349,7 @@ impl GGWave {
                 payload_buffer.as_mut_ptr() as *mut c_void,
                 payload_buffer.len() as i32,
             );
-            
+
             if result <= 0 {
                 Err(Error::DecodeFailed)
             } else {
@@ -379,7 +382,7 @@ impl GGWave {
         let params = unsafe { ggwave_getDefaultParameters() };
         let sample_rate = params.sampleRateOut as u32;
         let format = params.sampleFormatOut;
-        
+
         // Create WAV spec
         let spec = WavSpec {
             channels: 1,
@@ -387,11 +390,11 @@ impl GGWave {
             bits_per_sample: 16,
             sample_format: hound::SampleFormat::Int,
         };
-        
+
         let mut buffer = Vec::new();
-        let mut writer = WavWriter::new(Cursor::new(&mut buffer), spec)
-            .map_err(Error::WavWriteFailed)?;
-        
+        let mut writer =
+            WavWriter::new(Cursor::new(&mut buffer), spec).map_err(Error::WavWriteFailed)?;
+
         match format {
             // Float32 format
             ggwave_SampleFormat_GGWAVE_SAMPLE_FORMAT_F32 => {
@@ -401,12 +404,12 @@ impl GGWave {
                         raw_data.len() / std::mem::size_of::<f32>(),
                     )
                 };
-                
+
                 for &sample in samples {
                     let sample_i16 = (sample.clamp(-1.0, 1.0) * 32767.0) as i16;
                     writer.write_sample(sample_i16)?;
                 }
-            },
+            }
             // Int16 format
             ggwave_SampleFormat_GGWAVE_SAMPLE_FORMAT_I16 => {
                 let samples = unsafe {
@@ -415,30 +418,27 @@ impl GGWave {
                         raw_data.len() / std::mem::size_of::<i16>(),
                     )
                 };
-                
+
                 for &sample in samples {
                     writer.write_sample(sample)?;
                 }
-            },
+            }
             // Other formats (best effort)
             _ => {
                 let samples = unsafe {
-                    std::slice::from_raw_parts(
-                        raw_data.as_ptr() as *const i16,
-                        raw_data.len() / 2,
-                    )
+                    std::slice::from_raw_parts(raw_data.as_ptr() as *const i16, raw_data.len() / 2)
                 };
-                
+
                 for &sample in samples {
                     writer.write_sample(sample)?;
                 }
             }
         }
-        
+
         writer.finalize()?;
         Ok(buffer)
     }
-    
+
     /// Encode text and convert to WAV format
     ///
     /// # Arguments
@@ -463,11 +463,16 @@ impl GGWave {
     ///
     /// fs::write("hello.wav", wav_data).expect("Failed to write WAV file");
     /// ```
-    pub fn encode_to_wav(&self, text: &str, protocol_id: ProtocolId, volume: i32) -> Result<Vec<u8>> {
+    pub fn encode_to_wav(
+        &self,
+        text: &str,
+        protocol_id: ProtocolId,
+        volume: i32,
+    ) -> Result<Vec<u8>> {
         let raw_data = self.encode(text, protocol_id, volume)?;
         self.raw_to_wav(&raw_data)
     }
-    
+
     /// Save raw audio data to a WAV file
     ///
     /// # Arguments
@@ -483,7 +488,7 @@ impl GGWave {
         std::fs::write(path, wav_data)?;
         Ok(())
     }
-    
+
     /// Encode text and save directly to a WAV file
     ///
     /// # Arguments
@@ -507,16 +512,16 @@ impl GGWave {
     ///     .expect("Failed to encode and save WAV file");
     /// ```
     pub fn encode_to_wav_file<P: AsRef<Path>>(
-        &self, 
-        text: &str, 
-        protocol_id: ProtocolId, 
-        volume: i32, 
-        path: P
+        &self,
+        text: &str,
+        protocol_id: ProtocolId,
+        volume: i32,
+        path: P,
     ) -> Result<()> {
         let raw_data = self.encode(text, protocol_id, volume)?;
         self.save_raw_to_wav(&raw_data, path)
     }
-    
+
     /// Toggle reception of a specific protocol
     ///
     /// # Arguments
@@ -540,7 +545,7 @@ impl GGWave {
             ggwave_rxToggleProtocol(protocol_id, if enabled { 1 } else { 0 });
         }
     }
-    
+
     /// Toggle transmission of a specific protocol
     ///
     /// # Arguments
@@ -552,7 +557,7 @@ impl GGWave {
             ggwave_txToggleProtocol(protocol_id, if enabled { 1 } else { 0 });
         }
     }
-    
+
     /// Set the starting frequency for a reception protocol
     ///
     /// # Arguments
@@ -564,7 +569,7 @@ impl GGWave {
             ggwave_rxProtocolSetFreqStart(protocol_id, freq_start);
         }
     }
-    
+
     /// Set the starting frequency for a transmission protocol
     ///
     /// # Arguments
@@ -576,16 +581,14 @@ impl GGWave {
             ggwave_txProtocolSetFreqStart(protocol_id, freq_start);
         }
     }
-    
+
     /// Get the duration in frames for reception
     ///
     /// # Returns
     ///
     /// The duration in frames
     pub fn rx_duration_frames(&self) -> i32 {
-        unsafe {
-            ggwave_rxDurationFrames(self.instance)
-        }
+        unsafe { ggwave_rxDurationFrames(self.instance) }
     }
 
     /// Set debug mode and optionally redirect logs to a file
@@ -604,7 +607,7 @@ impl GGWave {
                     if !file_ptr.is_null() {
                         ggwave_setLogFile(file_ptr as *mut c_void);
                     }
-                },
+                }
                 None => {
                     // Disable logging
                     ggwave_setLogFile(std::ptr::null_mut());
@@ -626,7 +629,7 @@ impl GGWave {
     pub fn decode_raw(&self, waveform: &[u8], max_payload_size: usize) -> Result<String> {
         unsafe {
             let mut payload_buffer = vec![0u8; max_payload_size];
-            
+
             // Using decode instead of ndecode
             let result = ggwave_decode(
                 self.instance,
@@ -634,7 +637,7 @@ impl GGWave {
                 waveform.len() as i32,
                 payload_buffer.as_mut_ptr() as *mut c_void,
             );
-            
+
             if result <= 0 {
                 Err(Error::DecodeFailed)
             } else {
@@ -642,7 +645,7 @@ impl GGWave {
                 payload_buffer.truncate(result as usize);
                 match String::from_utf8(payload_buffer) {
                     Ok(s) => Ok(s),
-                    Err(e) => Err(Error::Utf8Error(e))
+                    Err(e) => Err(Error::Utf8Error(e)),
                 }
             }
         }
@@ -668,35 +671,35 @@ impl Drop for GGWave {
 /// This module provides constants for all the available transmission protocols.
 pub mod protocols {
     use super::*;
-    
+
     /// Standard audible protocol with normal speed
     pub const AUDIBLE_NORMAL: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_AUDIBLE_NORMAL;
     /// Fast audible protocol
     pub const AUDIBLE_FAST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_AUDIBLE_FAST;
     /// Fastest audible protocol
     pub const AUDIBLE_FASTEST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_AUDIBLE_FASTEST;
-    
+
     /// Standard ultrasound protocol with normal speed
     pub const ULTRASOUND_NORMAL: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_ULTRASOUND_NORMAL;
     /// Fast ultrasound protocol
     pub const ULTRASOUND_FAST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_ULTRASOUND_FAST;
     /// Fastest ultrasound protocol
     pub const ULTRASOUND_FASTEST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_ULTRASOUND_FASTEST;
-    
+
     /// DT protocol with normal speed
     pub const DT_NORMAL: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_DT_NORMAL;
     /// Fast DT protocol
     pub const DT_FAST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_DT_FAST;
     /// Fastest DT protocol
     pub const DT_FASTEST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_DT_FASTEST;
-    
+
     /// MT protocol with normal speed
     pub const MT_NORMAL: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_MT_NORMAL;
     /// Fast MT protocol
     pub const MT_FAST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_MT_FAST;
     /// Fastest MT protocol
     pub const MT_FASTEST: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_MT_FASTEST;
-    
+
     /// Custom protocol 0
     pub const CUSTOM_0: ProtocolId = ggwave_ProtocolId_GGWAVE_PROTOCOL_CUSTOM_0;
     /// Custom protocol 1
@@ -726,7 +729,7 @@ pub mod protocols {
 /// This module provides constants for all the available sample formats.
 pub mod sample_formats {
     use super::*;
-    
+
     /// Undefined sample format
     pub const UNDEFINED: SampleFormat = ggwave_SampleFormat_GGWAVE_SAMPLE_FORMAT_UNDEFINED;
     /// Unsigned 8-bit sample format
@@ -746,7 +749,7 @@ pub mod sample_formats {
 /// This module provides constants for all the available operating modes.
 pub mod operating_modes {
     use super::*;
-    
+
     /// Reception mode
     pub const RX: i32 = GGWAVE_OPERATING_MODE_RX as i32;
     /// Transmission mode
@@ -764,7 +767,7 @@ pub mod operating_modes {
 /// This module provides constants for all the available filter types.
 pub mod filters {
     use super::*;
-    
+
     /// Hann window filter
     pub const HANN: Filter = ggwave_Filter_GGWAVE_FILTER_HANN;
     /// Hamming window filter
