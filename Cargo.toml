@@ -1,9 +1,10 @@
 [package]
 name = "ggwave-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Thoxy"]
 readme = "README.md"
+description = "Simple rust bindings for the ggwave lib"
 repository = "https://github.com/Thoxy67/ggwave-rs"
 license = "MIT"
 
