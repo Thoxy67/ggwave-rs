@@ -1,22 +1,93 @@
 [package]
 name = "ggwave-rs"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
-authors = ["Thoxy"]
+authors = ["Thoxy", "Contributors"]
 readme = "README.md"
-description = "Simple rust bindings for the ggwave lib"
+description = "Optimized Rust bindings for the ggwave audio data transmission library"
 repository = "https://github.com/Thoxy67/ggwave-rs"
 license = "MIT"
+keywords = ["audio", "data", "transmission", "sound", "communication"]
+categories = ["multimedia", "api-bindings"]
 
 [dependencies]
 hound = "3.5"
 libc = "0.2"
+thiserror = { version = "2.0.12", optional = true }
+
+# Optional dependencies
+ringbuf = { version = "0.4.7", optional = true }
+bytes = { version = "1.5", optional = true }
+async-trait = { version = "0.1.77", optional = true }
+futures = { version = "0.3", optional = true }
+tokio = { version = "1.44", features = ["full"], optional = true }
 
 [build-dependencies]
 bindgen = "0.71"
 cc = "1.2"
-cmake = "0.1"
+pkg-config = "0.3"
 
 [dev-dependencies]
-tempfile = "3.18.0"
+tempfile = "3.19.0"
 lazy_static = "1.5.0"
+cpal = "0.15.3"       # Cross-platform audio I/O
+ringbuf = "0.4.7"     # Lock-free ring buffer
+anyhow = "1.0.97"     # Error handling
+ctrlc = "3.4"         # Signal handling
+tokio = { version = "1.44", features = ["full"] }
+
+[features]
+default = []
+
+# Library feature flags
+system-ggwave = []     # Use system-installed ggwave library
+simd = []              # Enable SIMD optimizations
+threading = []         # Enable multi-threading
+force-rebuild = []     # Force rebuilding the native library
+improved-errors = ["thiserror"]  # Better error types with thiserror
+
+# Advanced features
+zero-copy = ["bytes"]  # Zero-copy buffer handling 
+streaming = ["ringbuf"] # Streaming audio processing
+async = ["async-trait", "futures", "tokio"] # Link async feature to tokio dependency
+
+[[example]]
+name = "simple_example"
+path = "examples/simple_example.rs"
+
+[[example]]
+name = "debug_init"
+path = "examples/debug_init.rs"
+
+[[example]]
+name = "raw_ffi_init"
+path = "examples/raw_ffi_init.rs"
+required-features = ["streaming"]
+
+[[example]]
+name = "example_tx"
+path = "examples/example_tx.rs"
+required-features = ["streaming"]
+
+[[example]]
+name = "example_rx"
+path = "examples/example_rx.rs"
+required-features = ["streaming"]
+
+[[example]]
+name = "async_example"
+path = "examples/async_example.rs"
+required-features = ["async"]
+
+[package.metadata.docs.rs]
+features = ["improved-errors", "zero-copy", "streaming", "async"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+
+[profile.dev]
+opt-level = 1  # Better performance for debug builds
